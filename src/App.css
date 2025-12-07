@@ -1,0 +1,23 @@
+/* .form-control:focus {
+    background-color: #fff !important;
+    border-color: #1A314A !important;
+    box-shadow: 0 0 0 4px rgba(26, 49, 74, 0.1) !important;
+}
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(26, 49, 74, 0.3) !important;
+} */
+
+/* .modern-input:focus {
+  background-color: #fff !important;
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1) !important;
+} */
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}

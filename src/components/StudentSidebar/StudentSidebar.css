@@ -1,23 +1,68 @@
+/* Sidebar Container */
 .sidebar {
+  background-color: #152c44;
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;
-  width: 250px;
-  background-color: #152c44;
-  color: white;
-  padding: 15px;
-  overflow-y: auto;
-  transition: width 0.3s ease-in-out;
   z-index: 1000;
+  transition: width 0.3s ease-in-out;
+  overflow-x: hidden; 
+  white-space: nowrap; /* Critical: Prevents text wrapping during collapse */
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+}
+
+.sidebar.open {
+  width: 250px;
 }
 
 .sidebar.closed {
   width: 70px;
+}
+
+/* Navigation Links */
+.nav-link {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: background-color 0.2s;
+  color: #b0c4de !important; /* Soft blue-grey for inactive state */
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff !important;
+}
+
+/* Active Link Styling (Requires NavLink) */
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+  border-left: 4px solid #3b82f6; /* Blue accent bar */
+}
+
+/* Icons */
+.nav-link i, 
+.btn i {
+  font-size: 1.2rem;
+  min-width: 24px; /* Ensures icon stays centered in closed view */
+  text-align: center;
+}
+
+/* Hide text when closed */
+.sidebar.closed span {
+  display: none;
+  opacity: 0;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #3b82f6;
+  border: none;
   overflow: hidden;
 }
-.sidebar.closed .nav-link,
-.sidebar.closed .home-btn{
-     justify-content: flex-end;
-  padding: 10px 15px;
+
+.btn-primary:hover {
+  background-color: #2563eb;
 }

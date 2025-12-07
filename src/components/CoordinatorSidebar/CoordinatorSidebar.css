@@ -1,109 +1,143 @@
-/* Sidebar Container */
+/* CoordinatorSidebar.css */
+
+/* 1. Main Container */
 .sidebar {
+  background: linear-gradient(180deg, #1A314A 0%, #0B1C2E 100%);
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;
-  width: 250px;
-  background-color: #152c44;
-  color: white;
-  padding: 15px;
-  overflow-y: auto;
-  transition: width 0.3s ease-in-out;
-  z-index: 1000;
+  z-index: 1050;
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow-x: hidden;
+  white-space: nowrap;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.sidebar.closed {
-  width: 70px;
-  overflow: hidden;
-}
+.sidebar.open { width: 260px; }
+.sidebar.closed { width: 80px; }
 
-/* Toggle button */
+/* 2. Header & Toggles */
 .toggle-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 20px;
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 15px;
   cursor: pointer;
-  padding: 10px;
+  transition: color 0.2s;
+  text-align: right;
   width: 100%;
-  text-align: left;
 }
+.toggle-btn:hover { color: #60a5fa; }
 
-/* Navigation links */
-.nav-link, .home-btn, .dropdown-toggle {
+/* 3. Navigation Links */
+.nav-link, .dropdown-toggle {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  color: white;
-  background: none;
+  gap: 16px;
+  padding: 14px 24px;
+  color: #cbd5e1 !important; /* Slate-300 */
+  background: transparent;
   border: none;
   width: 100%;
   text-align: left;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 0;
+  outline: none;
+}
+
+.nav-link:hover, .dropdown-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff !important;
+  padding-left: 28px; /* Slide effect */
+}
+
+/* Active State */
+.nav-link.active-link, .dropdown-toggle.show {
+  background: rgba(59, 130, 246, 0.15); /* Blue Glass */
+  color: #60a5fa !important; /* Bright Blue */
+  box-shadow: inset 3px 0 0 #60a5fa; /* Left accent bar */
+}
+
+/* Chevron Rotation */
+.dropdown-chevron {
+  transition: transform 0.3s ease;
+}
+.dropdown-toggle.show .dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+/* Icons */
+.sidebar i {
+  font-size: 1.2rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* 4. Dropdowns - Eye Pleasing Update */
+.dropdown-menu {
+  /* Darker background for contrast */
+  background-color: rgba(0, 0, 0, 0.3) !important; 
+  position: relative !important;
+  width: 100%;
+  border: none;
+  padding: 5px 0;
+  margin: 0 !important;
+  border-radius: 0;
+  /* Inner shadow to show depth */
+  box-shadow: inset 0 10px 20px -10px rgba(0,0,0,0.5); 
+}
+
+.dropdown-item {
+  color: #94a3b8 !important;
+  padding: 10px 10px 10px 64px; /* Indented sub-items */
+  font-size: 0.9rem;
+  background: transparent !important;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: block;
+  border-left: 3px solid transparent; /* Prepare for hover accent */
+}
+
+.dropdown-item:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding-left: 70px;
+  border-left: 3px solid #60a5fa; /* Blue accent line on item hover */
+}
+
+/* 5. Footer / Logout */
+.logout-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444; /* Red */
+  width: 100%;
+  padding: 15px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   transition: background 0.2s;
   cursor: pointer;
 }
 
-.nav-link:hover, .dropdown-toggle:hover, .home-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
-/* When sidebar is closed, justify content to end for icons only */
-.sidebar.closed .nav-link,
-.sidebar.closed .home-btn,
-.sidebar.closed .dropdown-toggle {
-  justify-content: flex-end;
-  padding: 10px 15px;
+/* Utilities for Closed State */
+.sidebar.closed span, 
+.sidebar.closed .bi-caret-up-fill,
+.sidebar.closed .bi-caret-down-fill,
+.sidebar.closed .dropdown-chevron { 
+  display: none; 
 }
-
-/* Remove default dropdown toggle arrow */
-.dropdown-toggle::after {
-  display: none !important;
-}
-
-
-.dropdown-menu {
-  background-color: #152c44 !important;
-  border: none;
-  position: relative !important;
-  width: 100%;
-  display: none;
-  padding: 0;
-  box-shadow: none;
-}
-
-.dropdown-menu.show {
-  display: block;
-}
-
-/* Dropdown items */
-.dropdown-item {
-  color: white !important;
-  padding: 10px 20px;
-  background-color: #152c44 !important;
-  border: none;
-  display: block;
-  text-decoration: none;
-}
-
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white !important;
-}
-
-/* Logout button */
-.logout-btn {
-  background-color: transparent;
-  border: none;
-  color: white;
-  font-size: 20px;
-  padding: 10px;
-  display: flex;
-  position: absolute;
-  bottom: 20px;
-  right: -5px;
-  transition: all 0.3s ease-in-out;
-  justify-content: center;
-}
-
+.sidebar.closed .dropdown-menu { display: none !important; }
+.dropdown-toggle::after { display: none !important; }

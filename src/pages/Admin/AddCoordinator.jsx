@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Form, Button, Alert, Container, Row, Col } from "react-bootstrap";
 import axios from "axios";
 
-
 const AddCoordinator = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -12,8 +11,13 @@ const AddCoordinator = () => {
   const isEdit = state?.isEdit || false;
   const initialCoordinator = state?.coordinator || {};
 
+  const qualificationMap = {
+    1: "Bachelors",
+    2: "Masters",
+    3: "PhD",
+  };
+
   const provinceMap = {
-    0: "None",
     1: "Punjab",
     2: "Sindh",
     3: "Balochistan",
@@ -21,12 +25,45 @@ const AddCoordinator = () => {
     5: "GilgitBaltistan",
   };
 
-  const qualificationMap = {
-    0: "None",
-    1: "Bachelors",
-    2: "Masters",
-    3: "PhD",
+  // ===================================
+  // FORMAT FUNCTIONS
+  // ===================================
+
+  // CNIC format: 12345-1234567-1
+  const formatCNIC = (value) => {
+    value = value.replace(/\D/g, "");
+    if (value.length > 5 && value.length <= 12)
+      value = value.replace(/(\d{5})(\d{1,7})/, "$1-$2");
+    else if (value.length > 12)
+      value = value.replace(/(\d{5})(\d{7})(\d{1})/, "$1-$2-$3");
+    return value.slice(0, 15);
   };
+
+  // Phone format: 0300-1234567
+  const formatPhone = (value) => {
+    value = value.replace(/\D/g, "");
+    if (value.length > 4)
+      value = value.replace(/(\d{4})(\d{1,7})/, "$1-$2");
+    return value.slice(0, 12);
+  };
+
+  // Auto field handlers
+  const handleCNICChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: formatCNIC(e.target.value) });
+  };
+
+  const handlePhoneChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: formatPhone(e.target.value) });
+  };
+
+  // Normal handler
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ===================================
+  // FORM DATA STATE
+  // ===================================
 
   const [formData, setFormData] = useState({
     firstName: initialCoordinator.firstName || "",
@@ -34,7 +71,10 @@ const AddCoordinator = () => {
     cnic: initialCoordinator.cnic || "",
     fatherName: initialCoordinator.fatherName || "",
     fatherCnic: initialCoordinator.fatherCnic || "",
-dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOfBirth).toISOString().split("T")[0] : "",    qualification: initialCoordinator.qualification || "",
+    dateOfBirth: initialCoordinator.dateOfBirth
+      ? new Date(initialCoordinator.dateOfBirth).toISOString().split("T")[0]
+      : "",
+    qualification: initialCoordinator.qualification || "",
     province: initialCoordinator.province || "",
     city: initialCoordinator.city || "",
     personalNumber: initialCoordinator.personalNumber || "",
@@ -44,13 +84,12 @@ dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOf
     departmentId: initialCoordinator.departmentId || "",
     userId: initialCoordinator.userId || "",
   });
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dropdownData, setDropdownData] = useState({
     departments: [],
     users: [],
-    qualifications: [],
-    provinces: [],
   });
 
   useEffect(() => {
@@ -62,14 +101,16 @@ dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOf
 
     const fetchDropdownData = async () => {
       try {
-        const response = await axios.get("https://localhost:7145/Admin/GetCoordinatorDropdowns", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "https://localhost:7145/Admin/GetCoordinatorDropdowns",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         setDropdownData({
           departments: response.data.departments,
           users: response.data.users,
-          qualifications: response.data.qualification,
-          provinces: response.data.province,
         });
       } catch (err) {
         setError("Failed to fetch dropdown data.");
@@ -79,13 +120,13 @@ dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOf
     fetchDropdownData();
   }, [navigate, token]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  // ===================================
+  // SUBMIT HANDLER
+  // ===================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!token) {
       setError("No authentication token found. Please log in.");
       navigate("/login");
@@ -94,44 +135,40 @@ dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOf
 
     setLoading(true);
     setError(null);
+
     try {
       const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        cnic: formData.cnic,
-        fatherName: formData.fatherName,
-        fatherCnic: formData.fatherCnic,
-        dateOfBirth: formData.dateOfBirth,
-        qualification: parseInt(formData.qualification) || 0,
-        province: parseInt(formData.province) || 0,
-        city: formData.city,
-        personalNumber: formData.personalNumber,
-        fatherNumber: formData.fatherNumber,
-        emergencyNumber: formData.emergencyNumber,
-        universityName: formData.universityName,
-        departmentId: formData.departmentId,
-        userId: formData.userId,
+        ...formData,
+        qualification: parseInt(formData.qualification),
+        province: parseInt(formData.province),
       };
 
       if (isEdit) {
-        await axios.put(`https://localhost:7145/Admin/EditCoordinator/${initialCoordinator.coordinatorId}`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Coordinator updated:", initialCoordinator.coordinatorId);
+        await axios.put(
+          `https://localhost:7145/Admin/EditCoordinator/${initialCoordinator.coordinatorId}`,
+          payload,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
       } else {
-        await axios.post("https://localhost:7145/Admin/AddCoordinator", payload, {
-          headers: 
-           "Content-Type", "application/json"
-          :{ Authorization: `Bearer ${token}` },
-        });
-        console.log("Coordinator added");
+        await axios.post(
+          "https://localhost:7145/Admin/AddCoordinator",
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
       }
+
       navigate("/admin/view-coordinator");
     } catch (err) {
-      console.error("Submit error:", err);
       setError(
         err.response?.data?.message ||
-        err.message ||
+        JSON.stringify(err.response?.data?.errors) ||
         "Failed to save coordinator."
       );
     } finally {
@@ -139,235 +176,94 @@ dateOfBirth: initialCoordinator.dateOfBirth ? new Date(initialCoordinator.dateOf
     }
   };
 
+  // ===================================
+  // UI
+  // ===================================
+
   return (
-    <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
-      
-      <Container fluid className="p-4">
-        <h2 className="text-dark mb-4">{isEdit ? "Edit Coordinator" : "Add Coordinator"}</h2>
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="firstName">
-                <Form.Label>First Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="lastName">
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="cnic">
-                <Form.Label>CNIC</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="cnic"
-                  value={formData.cnic}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="personalNumber">
-                <Form.Label>Personal Number</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="personalNumber"
-                  value={formData.personalNumber}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="fatherName">
-                <Form.Label>Father Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="fatherName"
-                  value={formData.fatherName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="fatherCnic">
-                <Form.Label>Father CNIC</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="fatherCnic"
-                  value={formData.fatherCnic}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="dateOfBirth">
-                <Form.Label>Date of Birth</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="qualification">
-                <Form.Label>Qualification</Form.Label>
-                <Form.Select
-                  name="qualification"
-                  value={formData.qualification}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Qualification</option>
-                  {Object.entries(qualificationMap).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="province">
-                <Form.Label>Province</Form.Label>
-                <Form.Select
-                  name="province"
-                  value={formData.province}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Province</option>
-                  {Object.entries(provinceMap).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="city">
-                <Form.Label>City</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="fatherNumber">
-                <Form.Label>Father Number</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="fatherNumber"
-                  value={formData.fatherNumber}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="emergencyNumber">
-                <Form.Label>Emergency Number</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="emergencyNumber"
-                  value={formData.emergencyNumber}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="universityName">
-                <Form.Label>University Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="universityName"
-                  value={formData.universityName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="departmentId">
-                <Form.Label>Department</Form.Label>
-                <Form.Select
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Department</option>
-                  {dropdownData.departments.map((dept) => (
-                    <option key={dept.departmentId} value={dept.departmentId}>
-                      {dept.departmentName}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3" controlId="userId">
-                <Form.Label>User</Form.Label>
-                <Form.Select
-                  name="userId"
-                  value={formData.userId}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select User</option>
-                  {dropdownData.users.map((user) => (
-                    <option key={user.userId} value={user.userId}>
-                      {user.userName}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-          <Button
-            variant="primary"
-            type="submit"
-            disabled={loading}
-            style={{ backgroundColor: "#1A314A", border: "none" }}
-          >
-            {loading ? "Saving..." : isEdit ? "Update Coordinator" : "Add Coordinator"}
-          </Button>
-        </Form>
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", padding: "40px 0" }}>
+      <Container style={{ maxWidth: "900px" }}>
+        
+        {/* Header */}
+        <div className="mb-4 text-center">
+            <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>{isEdit ? "Edit Coordinator" : "Add Coordinator"}</h2>
+            <p className="text-muted">Manage department coordinator profile details.</p>
+        </div>
+
+        {/* Main Card */}
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div className="card-body p-4 p-md-5">
+                
+                {error && <Alert variant="danger" className="rounded-3 border-0 shadow-sm">{error}</Alert>}
+
+                <Form onSubmit={handleSubmit}>
+
+                  {/* Section 1: Personal Details */}
+                  <h6 className="fw-bold text-secondary text-uppercase small mb-3 border-bottom pb-2">Personal Information</h6>
+                  <Row className="g-3 mb-4">
+                    <Col md={6}><Form.Control placeholder="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="CNIC (XXXXX-XXXXXXX-X)" name="cnic" value={formData.cnic} onChange={handleCNICChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="Personal Phone" name="personalNumber" value={formData.personalNumber} onChange={handlePhoneChange} required className="bg-light border-0 py-2"/></Col>
+                  </Row>
+
+                  {/* Section 2: Family Info */}
+                  <h6 className="fw-bold text-secondary text-uppercase small mb-3 border-bottom pb-2 mt-4">Guardian / Family Info</h6>
+                  <Row className="g-3 mb-4">
+                    <Col md={6}><Form.Control placeholder="Father Name" name="fatherName" value={formData.fatherName} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="Father CNIC" name="fatherCnic" value={formData.fatherCnic} onChange={handleCNICChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="Father Phone" name="fatherNumber" value={formData.fatherNumber} onChange={handlePhoneChange} required className="bg-light border-0 py-2"/></Col>
+                    <Col md={6}><Form.Control placeholder="Emergency Phone" name="emergencyNumber" value={formData.emergencyNumber} onChange={handlePhoneChange} required className="bg-light border-0 py-2"/></Col>
+                  </Row>
+
+                  {/* Section 3: Academic & Location */}
+                  <div className="p-4 bg-light bg-opacity-50 rounded-4 mb-4 border border-light">
+                      <h6 className="fw-bold text-primary text-uppercase small mb-3">Academic & Location</h6>
+                      <Row className="g-3">
+                        <Col md={6}>
+                            <Form.Control type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} required className="border-0 shadow-sm text-muted"/>
+                        </Col>
+                        <Col md={6}>
+                            <Form.Select name="qualification" value={formData.qualification} onChange={handleChange} required className="border-0 shadow-sm">
+                                <option value="">Qualification</option>
+                                {Object.entries(qualificationMap).map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+                            </Form.Select>
+                        </Col>
+                        <Col md={6}>
+                            <Form.Select name="province" value={formData.province} onChange={handleChange} required className="border-0 shadow-sm">
+                                <option value="">Province</option>
+                                {Object.entries(provinceMap).map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+                            </Form.Select>
+                        </Col>
+                        <Col md={6}><Form.Control placeholder="City" name="city" value={formData.city} onChange={handleChange} required className="border-0 shadow-sm"/></Col>
+                        <Col md={12}><Form.Control placeholder="University Name" name="universityName" value={formData.universityName} onChange={handleChange} required className="border-0 shadow-sm"/></Col>
+                        <Col md={12}>
+                            <Form.Select name="departmentId" value={formData.departmentId} onChange={handleChange} required className="border-0 shadow-sm">
+                                <option value="">Department</option>
+                                {dropdownData.departments.map((dep) => <option key={dep.departmentId} value={dep.departmentId}>{dep.departmentName}</option>)}
+                            </Form.Select>
+                        </Col>
+                      </Row>
+                  </div>
+
+                  {/* Section 4: User Account */}
+                  <div className="mb-4">
+                      <label className="fw-bold text-secondary small text-uppercase mb-2">System User Account</label>
+                      <Form.Select name="userId" value={formData.userId} onChange={handleChange} required className="bg-light border-0 py-2">
+                          <option value="">Link User Account</option>
+                          {dropdownData.users.map((u) => <option key={u.userId} value={u.userId}>{u.userName}</option>)}
+                      </Form.Select>
+                  </div>
+
+                  <div className="d-grid">
+                      <Button type="submit" disabled={loading} className="py-3 fw-bold rounded-3 border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
+                          {loading ? "Processing..." : (isEdit ? "Update Profile" : "Save Coordinator")}
+                      </Button>
+                  </div>
+
+                </Form>
+            </div>
+        </div>
       </Container>
     </div>
   );

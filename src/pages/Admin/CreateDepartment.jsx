@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Button, Card } from "react-bootstrap";
+import { Form, Button, Card, Container, Alert } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -13,76 +13,61 @@ const CreateDepartment = () => {
     e.preventDefault();
     const token = sessionStorage.getItem("token");
 
-    
-    if (!departmentName) {
-      setError("Department name is required");
-      return;
-    }
+    if (!departmentName) { setError("Department name is required"); return; }
 
     try {
-      const response = await axios.post(
-        "https://localhost:7145/Admin/CreateDepartment", 
+      await axios.post(
+        "https://localhost:7145/Admin/CreateDepartment",
         { departmentName },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, 
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-    
       setSuccess("Department created successfully!");
       setError(null);
       navigate("/admin/view-departments");
-    
     } catch (err) {
       setError("Error creating department. Please try again.");
       setSuccess(null);
     }
   };
 
-return (
-  <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
-   
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <Container style={{ maxWidth: "500px" }}>
+        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+            <Card.Body className="p-5">
+                <div className="text-center mb-4">
+                    <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width:'60px', height:'60px'}}>
+                        <i className="bi bi-building-add fs-3"></i>
+                    </div>
+                    <h3 className="fw-bold text-dark mb-1">Create Department</h3>
+                    <p className="text-muted small">Add a new academic department.</p>
+                </div>
 
-    <div className="flex-grow-1 d-flex justify-content-center align-items-center">
-      <Card
-        className="p-4"
-        style={{
-          width: "100%",
-          maxWidth: "500px",
-          boxShadow: "0 6px 16px rgba(0, 0, 0, 0.1)",
-          borderRadius: "10px",
-          backgroundColor: "#ffffff"
-        }}
-      >
-        <Card.Body>
-          <Card.Title className="text-center mb-4">Create New Department</Card.Title>
+                {error && <Alert variant="danger" className="rounded-3 border-0 small py-2">{error}</Alert>}
+                {success && <Alert variant="success" className="rounded-3 border-0 small py-2">{success}</Alert>}
 
-          <Form onSubmit={handleFormSubmit}>
-            <Form.Group className="mb-3" controlId="departmentName">
-              <Form.Label>Department Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter department name"
-                value={departmentName}
-                onChange={(e) => setDepartmentName(e.target.value)}
-                required
-              />
-            </Form.Group>
+                <Form onSubmit={handleFormSubmit}>
+                    <Form.Group className="mb-4">
+                        <Form.Label className="small fw-bold text-secondary text-uppercase">Department Name</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            placeholder="e.g. Computer Science" 
+                            value={departmentName} 
+                            onChange={(e) => setDepartmentName(e.target.value)} 
+                            required 
+                            className="bg-light border-0 py-2"
+                        />
+                    </Form.Group>
 
-            <Button variant="primary" type="submit" className="w-100">
-              Create Department
-            </Button>
-          </Form>
-
-          {error && <p className="text-danger mt-3 text-center">{error}</p>}
-          {success && <p className="text-success mt-3 text-center">{success}</p>}
-        </Card.Body>
-      </Card>
+                    <Button type="submit" className="w-100 py-2 fw-bold rounded-3 border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
+                        Create Department
+                    </Button>
+                </Form>
+            </Card.Body>
+        </Card>
+      </Container>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default CreateDepartment;

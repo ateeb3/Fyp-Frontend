@@ -1,147 +1,84 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Table, Button, Alert, Container, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { Table, Button, Container, Spinner } from "react-bootstrap";
 import axios from "axios";
-
 
 const ViewStudents = () => {
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
   const [students, setStudents] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Semester mapping from AddStudent.jsx
- 
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
-      setError("No authentication token found. Please log in.");
-      navigate("/login");
-      return;
-    }
-
+    if (!token) { navigate("/login"); return; }
     const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch students
-        const studentResponse = await axios.get("https://localhost:7145/Coordinator/ViewStudents", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Students API response:", studentResponse.data);
-        setStudents(studentResponse.data || []);
-
-        // Fetch departments
-        const dropdownResponse = await axios.get("https://localhost:7145/Coordinator/GetStudentDropdowns", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Dropdowns API response:", dropdownResponse.data);
-        setDepartments(dropdownResponse.data.departments || []);
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to fetch data."
-        );
-        console.error("Fetch data error:", err);
-      } finally {
-        setLoading(false);
-      }
+        try {
+            const [sRes, dRes] = await Promise.all([
+                axios.get("https://localhost:7145/Coordinator/ViewStudents", { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get("https://localhost:7145/Coordinator/GetStudentDropdowns", { headers: { Authorization: `Bearer ${token}` } })
+            ]);
+            setStudents(sRes.data || []);
+            setDepartments(dRes.data.departments || []);
+        } catch (err) { console.error(err); } 
+        finally { setLoading(false); }
     };
-
     fetchData();
-  }, [navigate, token]);
+  }, [token]);
 
-  const handleDelete = async (studentId) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
-
-    setLoading(true);
-    setError(null);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete student?")) return;
     try {
-      await axios.delete(`https://localhost:7145/Coordinator/DeleteStudent/${studentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStudents(students.filter((student) => student.studentId !== studentId));
-      console.log(`Student ${studentId} deleted`);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to delete student."
-      );
-      console.error("Delete student error:", err);
-    } finally {
-      setLoading(false);
-    }
+        await axios.delete(`https://localhost:7145/Coordinator/DeleteStudent/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        setStudents(students.filter(s => s.studentId !== id));
+    } catch { alert("Failed to delete."); }
   };
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh" }}>
-      
-      <div className="flex-grow-1" style={{ backgroundColor: "#f8f9fa" }}>
-        <Container fluid className="p-3 d-flex justify-content-center align-items-start">
-          <div className="w-100">
-            <h2 className="text-dark mb-3 text-center">View Students</h2>
-            {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
-            {loading && <Alert variant="info" className="mb-3">Loading...</Alert>}
-            <div className="p-3 bg-white rounded shadow-sm">
-              <Table bordered hover size="sm" responsive>
-                <thead>
-                  <tr>
-                    <th>Student#</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Current Semester</th>
-                    <th>Department</th>
-                    <th>CNIC</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.length > 0 ? (
-                    students.map((student,index) => (
-                      <tr key={student.studentId} style={{ fontWeight: "normal" }}>
-                        <td>{index+1}</td>
-                        <td>{student.firstName}</td>
-                        <td>{student.lastName}</td>
-                        {console.log("Semester value:", student.currentSemester)}
-                        <td>{student.currentSemester }</td>
-                        <td>{departments.find(d => d.departmentId === student.departmentId)?.departmentName || "N/A"}</td>
-                        <td>{student.cnic}</td>
-                        <td>
-                          <Button
-                            className="btn btn-warning btn-sm me-2"
-                            as={Link}
-                            to="/coordinator/add-student"
-                            state={{ student }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                             className="btn btn-danger btn-sm me-2"
-                            onClick={() => handleDelete(student.studentId)}
-                            disabled={loading}
-                          >
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center">
-                        No students found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", padding: "40px 0" }}>
+      <Container style={{ maxWidth: "1200px" }}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>Students</h2>
+                <p className="text-muted mb-0">Directory of enrolled students.</p>
             </div>
-          </div>
-        </Container>
-      </div>
+            <Button onClick={() => navigate("/coordinator/add-student")} className="rounded-pill px-4 fw-bold border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}>
+                + Add Student
+            </Button>
+        </div>
+
+        {loading ? <div className="text-center p-5"><Spinner animation="border" variant="primary"/></div> : (
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div className="table-responsive">
+                    <Table hover className="mb-0 align-middle">
+                        <thead className="bg-light text-secondary small text-uppercase">
+                            <tr>
+                                <th className="ps-4 py-3 border-0">Name</th>
+                                <th className="border-0">Semester</th>
+                                <th className="border-0">Department</th>
+                                <th className="border-0">CNIC</th>
+                                <th className="border-0 text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {students.length > 0 ? students.map((s) => (
+                                <tr key={s.studentId} style={{borderBottom: '1px solid #f1f5f9'}}>
+                                    <td className="ps-4 fw-bold text-dark">{s.firstName} {s.lastName}</td>
+                                    <td><span className="badge bg-light text-dark border">{s.currentSemester}</span></td>
+                                    <td className="text-muted">{departments.find(d => d.departmentId === s.departmentId)?.departmentName || "N/A"}</td>
+                                    <td className="text-muted small">{s.cnic}</td>
+                                    <td className="text-end pe-4">
+                                        <Button variant="light" size="sm" className="rounded-pill border-0 me-2 fw-bold text-white" style={{backgroundColor: '#1e293b'}} onClick={() => navigate("/coordinator/add-student", { state: { student: s } })}>Edit</Button>
+                                        <Button variant="danger" size="sm" className="rounded-pill border-0 bg-opacity-10 text-danger fw-bold" style={{backgroundColor: '#fee2e2', color: '#dc2626'}} onClick={() => handleDelete(s.studentId)}>Delete</Button>
+                                    </td>
+                                </tr>
+                            )) : <tr><td colSpan="5" className="text-center py-5 text-muted">No students found.</td></tr>}
+                        </tbody>
+                    </Table>
+                </div>
+            </div>
+        )}
+      </Container>
     </div>
   );
 };

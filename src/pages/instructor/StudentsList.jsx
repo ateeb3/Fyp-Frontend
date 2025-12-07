@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Container, Table, Alert, Button } from "react-bootstrap";
 
-
 const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,47 +15,21 @@ const StudentList = () => {
     setError("");
     const url = "https://localhost:7145/Teacher/ViewStudents";
     try {
-      if (!token) {
-        throw new Error("User not authenticated. Please log in.");
-      }
+      if (!token) throw new Error("User not authenticated. Please log in.");
 
-      console.log("Fetching students from:", url, "Headers:", { Authorization: `Bearer ${token.substring(0, 20)}...` });
       const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Fetch response:", response.data);
       if (!Array.isArray(response.data)) {
         throw new Error("Invalid data format: Expected an array of students.");
       }
-
-      response.data.forEach((student, index) => {
-        if (!student.firstName || !student.lastName || !student.email || student.semester == null) {
-          console.warn(`Invalid student at index ${index}:`, student);
-        }
-      });
-
       setStudents(response.data);
     } catch (err) {
-      console.error("Fetch error details:", {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-        headers: err.response?.headers,
-        config: { url: err.config?.url, headers: err.config?.headers },
-      });
-      let errorMessage = err.response?.data?.message || err.response?.data || err.message || "Something went wrong.";
-      if (err.response?.status === 404 && errorMessage.includes("No teacher found")) {
-        errorMessage = "No teacher profile found for your account. Please contact the administrator.";
-      } else if (err.response?.status === 404) {
-        errorMessage = `Students endpoint not found at ${url}. Verify backend route in TeacherController.cs or check server status.`;
-      } else if (err.response?.status === 401) {
-        errorMessage = "Unauthorized. Please log in again.";
-      }
-
+      console.error(err);
+      let errorMessage = err.response?.data?.message || "Something went wrong.";
       setError(errorMessage);
+      
       if (retryCount < maxRetries && err.response?.status !== 401 && err.response?.status !== 404) {
         setTimeout(() => {
           setRetryCount(retryCount + 1);
@@ -72,75 +45,51 @@ const StudentList = () => {
     fetchStudents();
   }, [retryCount, token]);
 
-  if (loading) return (
-    <Container fluid className="p-3 text-center">
-      <p>Loading students...</p>
-    </Container>
-  );
+  if (loading) return <div className="p-5 text-center"><div className="spinner-border text-primary"></div></div>;
 
   if (error) return (
     <Container fluid className="p-4">
-      <Alert variant="danger">
+      <Alert variant="danger" className="rounded-3 border-0 shadow-sm">
         {error}
-        {retryCount < maxRetries && error.includes("Something went wrong") && (
-          <span> Retrying... ({retryCount + 1}/{maxRetries})</span>
-        )}
-        {error.includes("endpoint not found") && (
-          <Button
-            variant="link"
-            onClick={() => {
-              setRetryCount(0);
-              fetchStudents();
-            }}
-          >
-            Retry
-          </Button>
-        )}
-        {error.includes("Unauthorized") && (
-          <Button
-            variant="link"
-            onClick={() => {
-              sessionStorage.clear();
-              window.location.href = "/login";
-            }}
-          >
-            Log In
-          </Button>
-        )}
+        {retryCount < maxRetries && <span> Retrying... ({retryCount + 1}/{maxRetries})</span>}
+        <Button variant="link" onClick={() => { setRetryCount(0); fetchStudents(); }}>Retry Now</Button>
       </Alert>
     </Container>
   );
 
   return (
-    <Container fluid className="p-4">
-      <h2 className="mb-4">Enrolled Students</h2>
-      {students.length === 0 && !error && (
-        <p>No students enrolled in your courses.</p>
-      )}
-      {students.length > 0 && (
-        <Table striped bordered hover className="table-bordered table-striped">
-          <thead className="table-dark">
-            <tr>
-              <th>#</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Email</th>
-              <th>Semester</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((student, index) => (
-              <tr key={`${student.email}-${index}`}>
-                <td>{index + 1}</td>
-                <td>{student.firstName}</td>
-                <td>{student.lastName}</td>
-                <td>{student.email}</td>
-                <td>{student.semester}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+    <Container fluid className="p-4" style={{backgroundColor: '#f8fafc', minHeight: '100vh'}}>
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{maxWidth: '1200px', margin: '0 auto'}}>
+        <div className="card-header bg-white border-bottom p-4">
+            <h4 className="fw-bold mb-0 text-dark" style={{color: '#1e293b'}}>Enrolled Students</h4>
+            <p className="text-muted small mb-0">List of students currently enrolled in your courses.</p>
+        </div>
+        <div className="table-responsive">
+            <Table hover className="mb-0 align-middle">
+                <thead className="bg-light text-secondary small text-uppercase">
+                    <tr>
+                        <th className="ps-4 py-3 border-0">#</th>
+                        <th className="border-0">First Name</th>
+                        <th className="border-0">Last Name</th>
+                        <th className="border-0">Email</th>
+                        <th className="border-0">Semester</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {students.map((student, index) => (
+                        <tr key={index} style={{borderBottom: '1px solid #f1f5f9'}}>
+                            <td className="ps-4 fw-bold text-muted">{index + 1}</td>
+                            <td className="fw-bold text-dark">{student.firstName}</td>
+                            <td>{student.lastName}</td>
+                            <td className="text-primary">{student.email}</td>
+                            <td><span className="badge bg-light text-dark border">{student.semester}</span></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+            {students.length === 0 && <div className="text-center p-5 text-muted">No students found.</div>}
+        </div>
+      </div>
     </Container>
   );
 };

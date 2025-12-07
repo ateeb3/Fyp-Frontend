@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Form, Button, Alert, Container, Row, Col } from "react-bootstrap";
 import axios from "axios";
 
-
 const AddStudent = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,7 +102,6 @@ const AddStudent = () => {
             : Object.entries(semesterMap).map(([value, label]) => ({ value, label })),
         };
         setDropdownData(dropdowns);
-        console.log("dropdownData:", dropdowns);
       } catch (err) {
         setError("Failed to fetch dropdown data.");
         console.error("Dropdown fetch error:", err);
@@ -112,11 +110,6 @@ const AddStudent = () => {
 
     fetchDropdownData();
   }, [navigate, token]);
-
-  // Log formData changes
-  useEffect(() => {
-    console.log("formData:", formData);
-  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -155,7 +148,6 @@ const AddStudent = () => {
         departmentId: formData.departmentId,
         userId: formData.userId,
       };
-      console.log("Submitting payload:", payload);
 
       let response;
       if (student) {
@@ -163,7 +155,7 @@ const AddStudent = () => {
         response = await axios.put(`https://localhost:7145/Coordinator/EditStudent/${student.studentId}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccessMessage(response.data); // String response: "Student edited and enrollments updated successfully!"
+        setSuccessMessage(response.data); 
       } else {
         // Add new student
         response = await axios.post("https://localhost:7145/Coordinator/AddStudent", payload, {
@@ -171,13 +163,11 @@ const AddStudent = () => {
         });
         setSuccessMessage(response.data.message || "Student created and enrolled in semester courses successfully!");
       }
-      console.log(student ? "Student updated" : "Student added", response.data);
       navigate("/coordinator/view-students");
     } catch (err) {
       console.error("Submit error:", err);
       let errorMessage = err.response?.data?.message || err.message || (student ? "Failed to update student." : "Failed to add student.");
       if (err.response?.status === 400 && err.response?.data?.errors) {
-        // Extract ModelState errors
         const modelStateErrors = Object.values(err.response.data.errors).flat().join(", ");
         errorMessage = modelStateErrors || "Validation failed.";
       }
@@ -188,327 +178,101 @@ const AddStudent = () => {
   };
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh" }}>
-      
-      <div className="flex-grow-1" style={{ backgroundColor: "#f8f9fa" }}>
-        <Container fluid className="p-3 d-flex justify-content-center align-items-start">
-          <div className="w-100" style={{ maxWidth: "700px" }}>
-            <h2 className="text-dark mb-3 text-center">{student ? "Edit Student" : "Add Student"}</h2>
-            {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
-            {successMessage && <Alert variant="success" className="mb-3">{successMessage}</Alert>}
-            <Form onSubmit={handleSubmit} className="p-3 bg-white rounded shadow-sm">
-              <Row className="g-2">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="firstName">
-                    <Form.Label>First Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter first name"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="lastName">
-                    <Form.Label>Last Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter last name"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="cnic">
-                    <Form.Label>CNIC</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="cnic"
-                      value={formData.cnic}
-                      onChange={handleChange}
-                      required
-                      placeholder="XXXXX-XXXXXXX-X"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="personalNumber">
-                    <Form.Label>Personal Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="personalNumber"
-                      value={formData.personalNumber}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter personal number"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="email">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter email"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="dateOfBirth">
-                    <Form.Label>Date of Birth</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="enrollmentNumber">
-                    <Form.Label>Enrollment Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="enrollmentNumber"
-                      value={formData.enrollmentNumber}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter enrollment number"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="enrollmentDate">
-                    <Form.Label>Enrollment Date</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="enrollmentDate"
-                      value={formData.enrollmentDate}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="currentSemester">
-                    <Form.Label>Current Semester</Form.Label>
-                    <Form.Select
-                      name="currentSemester"
-                      value={formData.currentSemester}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    >
-                      <option value="">Select Semester</option>
-                      {dropdownData.semesters.map(({ value, label }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {student && (
-                      <Form.Text className="text-muted">
-                        Changing semester will remove existing enrollments and enroll the student in all courses for the new semester.
-                      </Form.Text>
-                    )}
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="section">
-                    <Form.Label>Section</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="section"
-                      value={formData.section}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter section"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="batch">
-                    <Form.Label>Batch</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="batch"
-                      value={formData.batch}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter batch"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="qualification">
-                    <Form.Label>Qualification</Form.Label>
-                    <Form.Select
-                      name="qualification"
-                      value={formData.qualification}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    >
-                      <option value="">Select Qualification</option>
-                      {dropdownData.qualifications.map(({ value, label }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="guardianNumber">
-                    <Form.Label>Guardian Number</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="guardianNumber"
-                      value={formData.guardianNumber}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter guardian number"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="province">
-                    <Form.Label>Province</Form.Label>
-                    <Form.Select
-                      name="province"
-                      value={formData.province}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    >
-                      <option value="">Select Province</option>
-                      {dropdownData.provinces.map(({ value, label }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="city">
-                    <Form.Label>City</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter city"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="address">
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter address"
-                      size="sm"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="g-2 mt-1">
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="departmentId">
-                    <Form.Label>Department</Form.Label>
-                    <Form.Select
-                      name="departmentId"
-                      value={formData.departmentId}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    >
-                      <option value="">Select Department</option>
-                      {dropdownData.departments.map((dept) => (
-                        <option key={dept.departmentId} value={dept.departmentId}>
-                          {dept.departmentName}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Form.Group controlId="userId">
-                    <Form.Label>User</Form.Label>
-                    <Form.Select
-                      name="userId"
-                      value={formData.userId}
-                      onChange={handleChange}
-                      required
-                      size="sm"
-                    >
-                      <option value="">Select User</option>
-                      {dropdownData.users.map((user) => (
-                        <option key={user.userId} value={user.userId}>
-                          {user.userName}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <div className="text-center mt-3">
-                <Button
-                  variant="primary"
-                  type="submit"
-                  disabled={loading}
-                  style={{ backgroundColor: "#1A314A", border: "none", padding: "8px 16px" }}
-                >
-                  {loading ? "Saving..." : student ? "Update Student" : "Add Student"}
-                </Button>
-              </div>
-            </Form>
-          </div>
-        </Container>
-      </div>
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", padding: "40px 0" }}>
+      <Container style={{ maxWidth: "900px" }}>
+        
+        {/* Header */}
+        <div className="mb-4 text-center">
+            <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>{student ? "Edit Student" : "Add Student"}</h2>
+            <p className="text-muted">Register a new student into the academic system.</p>
+        </div>
+
+        {/* Form Card */}
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div className="card-body p-4 p-md-5">
+                
+                {error && <Alert variant="danger" className="rounded-3 border-0 shadow-sm">{error}</Alert>}
+                {successMessage && <Alert variant="success" className="rounded-3 border-0 shadow-sm">{successMessage}</Alert>}
+                
+                <Form onSubmit={handleSubmit}>
+                    
+                    {/* Section 1: Personal Info */}
+                    <h6 className="fw-bold text-secondary text-uppercase small mb-3 border-bottom pb-2">Personal Information</h6>
+                    <Row className="g-3 mb-4">
+                        <Col md={6}><Form.Control placeholder="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}><Form.Control placeholder="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}><Form.Control placeholder="CNIC (XXXXX-XXXXXXX-X)" name="cnic" value={formData.cnic} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}>
+                            <Form.Control type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} required className="bg-light border-0 py-2 text-muted" title="Date of Birth"/>
+                        </Col>
+                    </Row>
+
+                    {/* Section 2: Contact Info */}
+                    <h6 className="fw-bold text-secondary text-uppercase small mb-3 border-bottom pb-2 mt-4">Contact Details</h6>
+                    <Row className="g-3 mb-4">
+                        <Col md={6}><Form.Control type="email" placeholder="Email Address" name="email" value={formData.email} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}><Form.Control placeholder="Personal Phone" name="personalNumber" value={formData.personalNumber} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}><Form.Control placeholder="Guardian Phone" name="guardianNumber" value={formData.guardianNumber} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}><Form.Control placeholder="City" name="city" value={formData.city} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                        <Col md={6}>
+                            <Form.Select name="province" value={formData.province} onChange={handleChange} required className="bg-light border-0 py-2">
+                                <option value="">Select Province</option>
+                                {dropdownData.provinces.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </Form.Select>
+                        </Col>
+                        <Col md={12}><Form.Control placeholder="Full Address" name="address" value={formData.address} onChange={handleChange} required className="bg-light border-0 py-2"/></Col>
+                    </Row>
+
+                    {/* Section 3: Academic Info */}
+                    <div className="p-4 bg-light bg-opacity-50 rounded-4 mb-4 border border-light">
+                        <h6 className="fw-bold text-primary text-uppercase small mb-3">Academic Enrollment</h6>
+                        <Row className="g-3">
+                            <Col md={6}><Form.Control placeholder="Enrollment ID" name="enrollmentNumber" value={formData.enrollmentNumber} onChange={handleChange} required className="border-0 shadow-sm"/></Col>
+                            <Col md={6}><Form.Control type="date" name="enrollmentDate" value={formData.enrollmentDate} onChange={handleChange} required className="border-0 shadow-sm text-muted" title="Enrollment Date"/></Col>
+                            
+                            <Col md={4}>
+                                <Form.Select name="currentSemester" value={formData.currentSemester} onChange={handleChange} required className="border-0 shadow-sm">
+                                    <option value="">Semester</option>
+                                    {dropdownData.semesters.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                                </Form.Select>
+                            </Col>
+                            <Col md={4}><Form.Control placeholder="Section" name="section" value={formData.section} onChange={handleChange} required className="border-0 shadow-sm"/></Col>
+                            <Col md={4}><Form.Control type="number" placeholder="Batch" name="batch" value={formData.batch} onChange={handleChange} required className="border-0 shadow-sm"/></Col>
+                            
+                            <Col md={6}>
+                                <Form.Select name="qualification" value={formData.qualification} onChange={handleChange} required className="border-0 shadow-sm">
+                                    <option value="">Qualification</option>
+                                    {dropdownData.qualifications.map(q => <option key={q.value} value={q.value}>{q.label}</option>)}
+                                </Form.Select>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Select name="departmentId" value={formData.departmentId} onChange={handleChange} required className="border-0 shadow-sm">
+                                    <option value="">Department</option>
+                                    {dropdownData.departments.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+                                </Form.Select>
+                            </Col>
+                        </Row>
+                        {student && <div className="text-muted small mt-2 fst-italic"><i className="bi bi-info-circle me-1"></i> Changing semester will update course enrollments automatically.</div>}
+                    </div>
+
+                    {/* Section 4: User Account Link */}
+                    <div className="mb-4">
+                        <label className="fw-bold text-secondary small text-uppercase mb-2">System User Account</label>
+                        <Form.Select name="userId" value={formData.userId} onChange={handleChange} required className="bg-light border-0 py-2">
+                            <option value="">Link a Registered User Account</option>
+                            {dropdownData.users.map(u => <option key={u.userId} value={u.userId}>{u.userName}</option>)}
+                        </Form.Select>
+                    </div>
+
+                    <div className="d-grid">
+                        <Button type="submit" disabled={loading} className="py-3 fw-bold rounded-3 border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
+                            {loading ? "Processing..." : (student ? "Update Student Profile" : "Register Student")}
+                        </Button>
+                    </div>
+                </Form>
+            </div>
+        </div>
+      </Container>
     </div>
   );
 };

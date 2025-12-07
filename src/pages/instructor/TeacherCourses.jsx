@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Container, Table, Alert, Button } from "react-bootstrap";
 
-
 const TeacherCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,47 +15,19 @@ const TeacherCourses = () => {
     setError("");
     const url = "https://localhost:7145/Teacher/ViewCourses";
     try {
-      if (!token) {
-        throw new Error("User not authenticated. Please log in.");
-      }
+      if (!token) throw new Error("User not authenticated.");
 
-      console.log("Fetching courses from:", url, "Headers:", { Authorization: `Bearer ${token.substring(0, 20)}...` });
       const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Fetch response:", response.data);
-      if (!Array.isArray(response.data)) {
-        throw new Error("Invalid data format: Expected an array of courses.");
-      }
-
-      response.data.forEach((course, index) => {
-        if (!course.courseId || !course.courseTitle || course.creditHours == null) {
-          console.warn(`Invalid course at index ${index}:`, course);
-        }
-      });
-
+      if (!Array.isArray(response.data)) throw new Error("Invalid data format.");
       setCourses(response.data);
     } catch (err) {
-      console.error("Fetch error details:", {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-        headers: err.response?.headers,
-        config: { url: err.config?.url, headers: err.config?.headers },
-      });
-      let errorMessage = err.response?.data?.message || err.response?.data || err.message || "Something went wrong.";
-      if (err.response?.status === 404 && errorMessage.includes("No teacher Found")) {
-        errorMessage = "No teacher profile found for your account. Please contact the administrator.";
-      } else if (err.response?.status === 404) {
-        errorMessage = `Courses endpoint not found at ${url}. Verify backend route in TeacherController.cs or check server status.`;
-      } else if (err.response?.status === 401) {
-        errorMessage = "Unauthorized. Please log in again.";
-      }
-
+      console.error(err);
+      let errorMessage = err.response?.data?.message || "Something went wrong.";
       setError(errorMessage);
+
       if (retryCount < maxRetries && err.response?.status !== 401 && err.response?.status !== 404) {
         setTimeout(() => {
           setRetryCount(retryCount + 1);
@@ -72,71 +43,45 @@ const TeacherCourses = () => {
     fetchCourses();
   }, [token, retryCount]);
 
-  if (loading) return (
-    <Container fluid className="p-3 text-center">
-      <p>Loading...</p>
-    </Container>
-  );
+  if (loading) return <div className="p-5 text-center"><div className="spinner-border text-primary"></div></div>;
 
   if (error) return (
     <Container fluid className="p-4">
-      <Alert variant="danger">
-        {error}
-        {retryCount < maxRetries && error.includes("Something went wrong") && (
-          <span> Retrying... ({retryCount + 1}/{maxRetries})</span>
-        )}
-        {error.includes("endpoint not found") && (
-          <Button
-            variant="link"
-            onClick={() => {
-              setRetryCount(0);
-              fetchCourses();
-            }}
-          >
-            Retry
-          </Button>
-        )}
-        {error.includes("Unauthorized") && (
-          <Button
-            variant="link"
-            onClick={() => {
-              sessionStorage.clear();
-              window.location.href = "/login";
-            }}
-          >
-            Log In
-          </Button>
-        )}
-      </Alert>
+      <Alert variant="danger" className="rounded-3 border-0 shadow-sm">{error}</Alert>
     </Container>
   );
 
   return (
-    <Container fluid className="p-4">
-      <h2 className="mb-4">Your Courses</h2>
-      {courses.length === 0 && !error && (
-        <p>No courses assigned.</p>
-      )}
-      {courses.length > 0 && (
-        <Table striped bordered hover className="table-bordered table-striped">
-          <thead className="table-dark">
-            <tr>
-              <th>#</th>
-              <th>Course Name</th>
-              <th>Credit Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((course, index) => (
-              <tr key={course.courseId}>
-                <td>{index + 1}</td>
-                <td>{course.courseTitle}</td>
-                <td>{course.creditHours}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+    <Container fluid className="p-4" style={{backgroundColor: '#f8fafc', minHeight: '100vh'}}>
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{maxWidth: '1200px', margin: '0 auto'}}>
+        <div className="card-header bg-white border-bottom p-4">
+            <h4 className="fw-bold mb-0 text-dark" style={{color: '#1e293b'}}>Your Courses</h4>
+            <p className="text-muted small mb-0">Courses currently assigned to you.</p>
+        </div>
+        <div className="table-responsive">
+            <Table hover className="mb-0 align-middle">
+                <thead className="bg-light text-secondary small text-uppercase">
+                    <tr>
+                        <th className="ps-4 py-3 border-0">#</th>
+                        <th className="border-0">Course Name</th>
+                        <th className="border-0">Credit Hours</th>
+                        <th className="border-0">Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {courses.map((course, index) => (
+                        <tr key={course.courseId} style={{borderBottom: '1px solid #f1f5f9'}}>
+                            <td className="ps-4 fw-bold text-muted">{index + 1}</td>
+                            <td className="fw-bold text-dark">{course.courseTitle}</td>
+                            <td><span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10">{course.creditHours} Hrs</span></td>
+                            <td className="text-muted">{course.courseCode || "N/A"}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+            {courses.length === 0 && <div className="text-center p-5 text-muted">No courses assigned.</div>}
+        </div>
+      </div>
     </Container>
   );
 };

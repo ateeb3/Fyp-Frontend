@@ -9,7 +9,7 @@ const MyTeachers = () => {
 
   useEffect(() => {
     if (!token) {
-      console.warn("No token found in session storage.");
+      console.warn("No token found.");
       setLoading(false);
       return;
     }
@@ -29,45 +29,58 @@ const MyTeachers = () => {
   }, [token]);
 
   return (
-    <Container className="py-5">
-      <h3 className="text-center mb-4 text-success fw-bold">Your Course Instructors</h3>
+    <div style={{backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 0'}}>
+      <Container style={{ maxWidth: '1000px' }}>
+        <div className="mb-5 text-center">
+            <h2 className="fw-bold mb-1" style={{color: '#1e293b'}}>Course Instructors</h2>
+            <p className="text-muted">Contact information for your current teachers.</p>
+        </div>
 
-      {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" variant="success" />
-        </div>
-      ) : teachers.length === 0 ? (
-        <div className="alert alert-info text-center" role="alert">
-          No instructors found or you're not enrolled in any courses.
-        </div>
-      ) : (
-        <Table
-          striped
-          bordered
-          hover
-          responsive
-          className="shadow-sm"
-          style={{ maxWidth: "700px", margin: "0 auto" }}
-        >
-          <thead className="table-success">
-            <tr>
-              <th style={{ width: "10%" }}>#</th>
-              <th>Name</th>
-              <th style={{ width: "30%" }}>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teachers.map((teacher, index) => (
-              <tr key={index}>
-                <td className="align-middle text-center">{index + 1}</td>
-                <td className="align-middle">{teacher.firstName} {teacher.lastName}</td>
-                <td className="align-middle">{teacher.email}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-    </Container>
+        {loading ? (
+          <div className="text-center p-5">
+            <Spinner animation="border" variant="primary" />
+          </div>
+        ) : teachers.length === 0 ? (
+          <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+            <p className="text-muted mb-0">No instructors found.</p>
+          </div>
+        ) : (
+          <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div className="table-responsive">
+                <Table hover className="mb-0 align-middle">
+                    <thead className="bg-light text-secondary small text-uppercase">
+                        <tr>
+                            <th className="ps-4 py-3 border-0">Instructor</th>
+                            <th className="border-0">Email Address</th>
+                            <th className="border-0 text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {teachers.map((teacher, index) => (
+                            <tr key={index} style={{borderBottom: '1px solid #f1f5f9'}}>
+                                <td className="ps-4">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="rounded-circle bg-light d-flex align-items-center justify-content-center text-secondary fw-bold" style={{width:'40px', height:'40px'}}>
+                                            {teacher.firstName.charAt(0)}{teacher.lastName.charAt(0)}
+                                        </div>
+                                        <span className="fw-bold text-dark">{teacher.firstName} {teacher.lastName}</span>
+                                    </div>
+                                </td>
+                                <td className="text-muted">{teacher.email}</td>
+                                <td className="text-end pe-4">
+                                    <a href={`mailto:${teacher.email}`} className="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                        <i className="bi bi-envelope me-1"></i> Email
+                                    </a>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </div>
+          </div>
+        )}
+      </Container>
+    </div>
   );
 };
 

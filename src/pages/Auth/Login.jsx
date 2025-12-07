@@ -1,161 +1,202 @@
 import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Form, Button, Card, FloatingLabel, Spinner, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Parse query params
-  const searchParams = new URLSearchParams(location.search);
-  const loginAs = searchParams.get("role") || "Teacher";
-
-  // Hardcoded credentials
-  const validStudents = [
-    { username: "student1", password: "12345" },
-    { username: "student2", password: "12345" },
-  ];
-
-  const validInstructor = { username: "instructor", password: "12345" };
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
-    if (loginAs.toLowerCase() === "student") {
-      const student = validStudents.find(
-        (s) => s.username === userName && s.password === password
-      );
+    try {
+      const response = await axios.post("https://localhost:7145/Auth/Login", {
+        userName,
+        password,
+      });
 
-      if (!student) {
-        setError("Invalid student username or password");
-        return;
+      const { token, role } = response.data;
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("role", role);
+
+      // --- LOGIC: Check Pending Session ---
+      const pendingSession = sessionStorage.getItem("joinRoomId");
+
+      if (pendingSession) {
+        navigate(`/classroom?role=${role === "Teacher" ? "instructor" : "student"}`);
+      } else {
+        // --- LOGIC: Dashboard Routing ---
+        switch (role) {
+          case "Admin":
+            navigate("/admin");
+            break;
+          case "Coordinator":
+            navigate("/coordinator-dashboard");
+            break;
+          case "Teacher":
+            navigate("/instructor-dashboard");
+            break;
+          case "Student":
+            navigate("/student-dashboard");
+            break;
+          default:
+            setError("Invalid role assigned.");
+        }
       }
-
-      sessionStorage.setItem("token", "dummy-token");
-      sessionStorage.setItem("role", "Student");
-
-      // Navigate to classroom if joined via session link
-      const roomId = sessionStorage.getItem("joinRoomId");
-      if (roomId) {
-        navigate(`/classroom?room=${roomId}`);
-        sessionStorage.removeItem("joinRoomId");
-        return;
-      }
-
-      navigate("/student");
-    }
-
-    if (loginAs.toLowerCase() === "teacher") {
-      if (userName !== validInstructor.username || password !== validInstructor.password) {
-        setError("Invalid instructor username or password");
-        return;
-      }
-
-      sessionStorage.setItem("token", "dummy-token");
-      sessionStorage.setItem("role", "Teacher");
-      navigate("/instructor");
+    } catch (err) {
+      console.error(err);
+      // 🔥 GENERIC ERROR MESSAGE FOR SECURITY
+      setError("Invalid credentials");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundImage: "url('/logos/background.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: "350px",
-          padding: "30px",
-          borderRadius: "20px",
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-          color: "white",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src="/logos/finalbg.png"
-          alt="ClassPulse Logo"
-          style={{
-            width: "120px",
-            height: "120px",
-            marginBottom: "15px",
-            backgroundColor: "rgba(255, 255, 255, 0.2)",
-            borderRadius: "50%",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-            objectFit: "cover",
-          }}
-        />
+    <div style={styles.container}>
+      {/* Decorative Background Blobs */}
+      <div style={styles.blob1}></div>
+      <div style={styles.blob2}></div>
 
-        <h3 style={{ marginBottom: "20px" }}>
-          {loginAs.toLowerCase() === "student" ? "Student Login" : "Instructor Login"}
-        </h3>
+      <Card style={styles.card}>
+        <Card.Body className="p-5">
+          <div className="text-center mb-5">
+            <h2 className="fw-bold mb-2" style={{ color: "#1A314A", letterSpacing: "-0.5px" }}>Class Pulse</h2>
+            <div style={styles.separator}></div>
+            <p className="text-muted small">Welcome back! Please login to your account.</p>
+          </div>
 
-        <Form onSubmit={handleLogin}>
-          <Form.Group className="mb-3">
-            <Form.Control
-              type="text"
-              placeholder="Username"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-              style={{ borderRadius: "12px", padding: "12px", border: "none" }}
-            />
-          </Form.Group>
+          {error && (
+            <Alert variant="danger" className="text-center border-0 bg-danger-subtle text-danger py-2 mb-4" style={{ fontSize: "0.85rem", borderRadius: "10px" }}>
+              {error}
+            </Alert>
+          )}
 
-          <Form.Group className="mb-3">
-            <Form.Control
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ borderRadius: "12px", padding: "12px", border: "none" }}
-            />
-          </Form.Group>
+          <Form onSubmit={handleLogin}>
+            <FloatingLabel controlId="floatingInput" label="Username" className="mb-3">
+              <Form.Control
+                type="text"
+                placeholder="Enter username"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                required
+                style={styles.input}
+                className="shadow-none"
+              />
+            </FloatingLabel>
 
-          <Button
-            type="submit"
-            className="w-100"
-            style={{
-              borderRadius: "12px",
-              padding: "10px",
-              backgroundColor: "#1A314A",
-              border: "none",
-              fontWeight: "bold",
-            }}
-          >
-            Login
-          </Button>
-        </Form>
+            <FloatingLabel controlId="floatingPassword" label="Password" className="mb-4">
+              <Form.Control
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={styles.input}
+                className="shadow-none"
+              />
+            </FloatingLabel>
 
-        <div className="mt-3">
-          <a
-            href="/forgot-password"
-            className="text-decoration-none"
-            style={{ color: "#fff", fontSize: "14px" }}
-          >
-            Forgot Password?
-          </a>
-        </div>
-
-        {error && <p className="text-danger mt-2">{error}</p>}
-      </div>
+            <Button
+              variant="primary"
+              type="submit"
+              className="w-100 py-3 fw-bold"
+              style={styles.button}
+              disabled={isLoading}
+              onMouseOver={(e) => e.target.style.transform = "translateY(-2px)"}
+              onMouseOut={(e) => e.target.style.transform = "translateY(0)"}
+            >
+              {isLoading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                  Authenticating...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </Form>
+          
+          <div className="text-center mt-4">
+            <small className="text-muted">
+              Don't have an account? <span style={{ color: "#1A314A", fontWeight: "700", cursor: "pointer" }}>Contact Admin</span>
+            </small>
+          </div>
+        </Card.Body>
+      </Card>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    minHeight: "100vh",
+    position: "relative",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f2f5",
+    background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    overflow: "hidden",
+    zIndex: 1
+  },
+  blob1: {
+    position: "absolute",
+    top: "20%",
+    left: "30%",
+    width: "300px",
+    height: "300px",
+    background: "radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, rgba(0,0,0,0) 70%)",
+    transform: "translate(-50%, -50%)",
+    zIndex: -1,
+  },
+  blob2: {
+    position: "absolute",
+    bottom: "20%",
+    right: "30%",
+    width: "400px",
+    height: "400px",
+    background: "radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, rgba(0,0,0,0) 70%)",
+    transform: "translate(50%, 50%)",
+    zIndex: -1,
+  },
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    borderRadius: "24px",
+    border: "none",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", 
+    backgroundColor: "rgba(255, 255, 255, 0.98)",
+    backdropFilter: "blur(10px)",
+  },
+  separator: {
+    width: "40px",
+    height: "4px",
+    backgroundColor: "#1A314A",
+    borderRadius: "2px",
+    margin: "15px auto"
+  },
+  input: {
+    borderRadius: "12px",
+    border: "1px solid transparent",
+    backgroundColor: "#F3F4F6",
+    fontSize: "0.95rem",
+    paddingTop: "1.5rem",
+    paddingBottom: "0.5rem"
+  },
+  button: {
+    backgroundColor: "#1A314A",
+    borderColor: "#1A314A",
+    borderRadius: "12px",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+  },
 };
 
 export default Login;

@@ -29,45 +29,51 @@ const MyCourses = () => {
   }, [token]);
 
   return (
-    <Container className="py-5">
-      <h3 className="text-center mb-4">Your Enrolled Courses</h3>
-
-      {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" />
+    <div style={{backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 0'}}>
+      <Container style={{ maxWidth: '1000px' }}>
+        <div className="mb-5 text-center">
+            <h2 className="fw-bold mb-1" style={{color: '#1e293b'}}>My Enrolled Courses</h2>
+            <p className="text-muted">View all academic courses you are currently taking.</p>
         </div>
-      ) : courses.length === 0 ? (
-        <p className="text-center text-muted">
-          No courses found or you're not enrolled in any.
-        </p>
-      ) : (
-        <Table
-          striped
-          bordered
-          hover
-          responsive
-          className="shadow-sm"
-          style={{ maxWidth: "700px", margin: "0 auto" }}
-        >
-          <thead className="table-primary">
-            <tr>
-              <th style={{ width: "10%" }}>#</th>
-              <th>Course Title</th>
-              <th style={{ width: "20%" }}>Credit Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((course, index) => (
-              <tr key={index}>
-                <td className="align-middle text-center">{index + 1}</td>
-                <td className="align-middle">{course.courseTitle}</td>
-                <td className="align-middle text-center">{course.creditHours}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-    </Container>
+
+        {loading ? (
+          <div className="text-center p-5">
+            <Spinner animation="border" variant="primary" />
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+            <p className="text-muted mb-0">No courses found or you're not enrolled in any.</p>
+          </div>
+        ) : (
+          <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div className="table-responsive">
+                <Table hover className="mb-0 align-middle">
+                    <thead className="bg-light text-secondary small text-uppercase">
+                        <tr>
+                            <th className="ps-4 py-3 border-0">#</th>
+                            <th className="border-0">Course Title</th>
+                            <th className="border-0 text-center">Credits</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {courses.map((course, index) => (
+                            <tr key={index} style={{borderBottom: '1px solid #f1f5f9'}}>
+                                <td className="ps-4 fw-bold text-muted">{index + 1}</td>
+                                <td className="fw-bold text-dark">{course.courseTitle}</td>
+                                <td className="text-center">
+                                    <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill px-3">
+                                        {course.creditHours} Hrs
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </div>
+          </div>
+        )}
+      </Container>
+    </div>
   );
 };
 

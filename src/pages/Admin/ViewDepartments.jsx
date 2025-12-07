@@ -204,17 +204,14 @@ const ViewDepartments = () => {
                   ) : (
                     <>
                       <Button
-                        variant="warning"
-                        size="sm"
+                        variant="light" size="sm" className="rounded-pill border-0 me-2 fw-bold text-white" style={{backgroundColor: '#1e293b'}}
                         onClick={() => handleEdit(dept)}
                         disabled={editId !== null}
                       >
                         Edit
                       </Button>
                       <Button
-                        variant="danger"
-                        size="sm"
-                        className="ms-2"
+                        variant="danger" size="sm" className="rounded-pill border-0 bg-opacity-10 text-danger fw-bold" style={{backgroundColor: '#fee2e2', color: '#dc2626'}}
                         onClick={() => handleDelete(dept.departmentId)}
                         disabled={isDeleting || editId !== null}
                       >
