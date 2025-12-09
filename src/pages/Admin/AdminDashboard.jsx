@@ -24,7 +24,7 @@ const AdminDashboard = () => {
     const fetchDepartments = async () => {
       setLoadingDepartments(true);
       try {
-        const response = await axios.get("https://fyp-backend.runasp.net/Admin/ViewDepartments", { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get("https://localhost:7145/Admin/ViewDepartments", { headers: { Authorization: `Bearer ${token}` } });
         setDepartments(response.data);
       } catch (err) { console.error(err); } 
       finally { setLoadingDepartments(false); }
@@ -33,7 +33,7 @@ const AdminDashboard = () => {
     const fetchCoordinators = async () => {
       setLoadingCoordinators(true);
       try {
-        const response = await axios.get("https://fyp-backend.runasp.net/Admin/ViewAllCoordinators", { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get("https://localhost:7145/Admin/ViewAllCoordinators", { headers: { Authorization: `Bearer ${token}` } });
         setCoordinators(response.data);
       } catch (err) { console.error(err); } 
       finally { setLoadingCoordinators(false); }

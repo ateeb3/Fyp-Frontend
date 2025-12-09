@@ -16,7 +16,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("https://fyp-backend.runasp.net/Auth/Login", {
+      const response = await axios.post("https://localhost:7145/Auth/Login", {
         userName,
         password,
       });
